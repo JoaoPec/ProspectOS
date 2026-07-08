@@ -1,0 +1,14 @@
+.env
+leads.db
+saidas/
+__pycache__/
+*.pyc
+logs/
+*.log
+backups/
+backups_manuais/
+.pytest_cache/
+google-maps-scraper.exe
+queries.txt
+instagram/sessao/
+instagram/comentarios/

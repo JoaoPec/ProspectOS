@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prospecção — CRM local</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topo">
+    <h1>📍 Prospecção</h1>
+    <div class="topo-acoes">
+      <a href="/api/exportar" class="botao">⬇ Exportar CSV</a>
+      <button id="btn-nova-busca" class="botao botao-primario">+ Nova busca</button>
+    </div>
+  </header>
+
+  <section id="dashboard" class="dashboard"></section>
+
+  <section class="filtros">
+    <input id="filtro-busca" type="search" placeholder="Buscar por nome ou endereço...">
+
+    <select id="filtro-status">
+      <option value="">Todos os status</option>
+      {% for s in status_validos %}
+      <option value="{{ s }}">{{ s }}</option>
+      {% endfor %}
+    </select>
+
+    <select id="filtro-nicho">
+      <option value="">Todos os nichos</option>
+    </select>
+
+    <select id="filtro-nota">
+      <option value="">Qualquer nota</option>
+      <option value="4">Nota ≥ 4.0</option>
+      <option value="4.5">Nota ≥ 4.5</option>
+      <option value="5">Nota = 5.0</option>
+    </select>
+
+    <button id="btn-limpar-filtros" class="botao">Limpar filtros</button>
+  </section>
+
+  <div id="faixa-erro" class="faixa-erro escondido"></div>
+
+  <section id="contador" class="contador"></section>
+
+  <main id="lista-leads" class="lista-leads"></main>
+
+  <!-- Modal de nova busca -->
+  <div id="modal-busca" class="modal escondido">
+    <div class="modal-conteudo">
+      <h2>Nova busca no Google Maps</h2>
+      <p>Escreva um nicho + cidade por linha (ex.: "corretor de imóveis em Curitiba").</p>
+      <textarea id="texto-queries" rows="5" placeholder="corretor de imóveis em Curitiba"></textarea>
+      <div class="modal-acoes">
+        <button id="btn-cancelar-busca" class="botao">Cancelar</button>
+        <button id="btn-minimizar-busca" class="botao escondido">Minimizar e continuar usando</button>
+        <button id="btn-confirmar-busca" class="botao botao-primario">Buscar</button>
+      </div>
+      <p id="status-busca" class="status-busca"></p>
+      <div id="progresso-busca" class="progresso-busca escondido">
+        <div class="spinner"></div>
+        <div class="progresso-info">
+          <div id="progresso-texto" class="progresso-texto"></div>
+          <div class="progresso-barra-fundo">
+            <div id="progresso-barra" class="progresso-barra"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Indicador flutuante: aparece quando o modal de busca está minimizado e a busca continua rodando -->
+  <div id="indicador-busca-flutuante" class="indicador-busca-flutuante escondido">
+    <div class="spinner spinner-pequeno"></div>
+    <span id="indicador-busca-texto">Buscando...</span>
+  </div>
+
+  <!-- Modal de detalhe do lead -->
+  <div id="modal-lead" class="modal escondido">
+    <div class="modal-conteudo modal-lead">
+      <button id="btn-fechar-lead" class="botao-fechar">×</button>
+      <h2 id="lead-nome"></h2>
+      <p id="lead-info" class="lead-info"></p>
+
+      <label>Status</label>
+      <select id="lead-status"></select>
+
+      <label>Tags (separadas por vírgula)</label>
+      <input id="lead-tags" type="text" placeholder="urgente, zona sul, indicação">
+      <div id="lead-tags-chips" class="chips"></div>
+
+      <label>Próximo follow-up</label>
+      <input id="lead-followup" type="date">
+
+      <div class="modal-acoes">
+        <button id="btn-salvar-tags-followup" class="botao">Salvar tags e follow-up</button>
+      </div>
+
+      <label>Observações</label>
+      <textarea id="lead-observacoes" rows="3" placeholder="Anotações sobre esse contato..."></textarea>
+      <button id="btn-salvar-observacoes" class="botao">Salvar observações</button>
+
+      <hr>
+
+      <label>Mensagem de abordagem (gerada por IA)</label>
+      <textarea id="lead-mensagem" rows="6" placeholder="Clique em 'Gerar mensagem' para criar uma sugestão"></textarea>
+      <div class="modal-acoes">
+        <button id="btn-gerar-mensagem" class="botao botao-primario">✨ Gerar mensagem</button>
+        <button id="btn-copiar-mensagem" class="botao">Copiar</button>
+        <button id="btn-copiar-whatsapp" class="botao botao-whatsapp">Copiar número</button>
+      </div>
+
+      <hr>
+
+      <details>
+        <summary>Histórico de status</summary>
+        <div id="lead-historico" class="historico"></div>
+      </details>
+
+      <hr>
+      <button id="btn-excluir-lead" class="botao botao-perigo">🗑️ Excluir este lead</button>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
