@@ -95,6 +95,16 @@ export function useLeadMutations(placeId: string) {
     },
   })
 
+  const reanalisarSite = useMutation({
+    mutationFn: () => leadsService.reanalisarSite(placeId),
+    onSuccess: (resultado) => {
+      invalidarListaEMetricas()
+      const rotulos = { sem_site: "sem site", site_ruim: "site ruim", site_ok: "site ok" }
+      const detalhe = resultado.site_problemas ? ` - ${resultado.site_problemas}` : ""
+      toast.success(`Site reanalisado: ${rotulos[resultado.site_status]}${detalhe}`)
+    },
+  })
+
   const excluirDefinitivamente = useMutation({
     mutationFn: () => leadsService.excluirDefinitivamente(placeId),
     onSuccess: () => {
@@ -111,6 +121,7 @@ export function useLeadMutations(placeId: string) {
     gerarMensagem,
     marcarFollowupEnviado,
     ignorar,
+    reanalisarSite,
     excluirDefinitivamente,
   }
 }

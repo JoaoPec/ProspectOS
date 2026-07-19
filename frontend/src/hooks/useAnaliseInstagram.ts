@@ -20,6 +20,14 @@ export function useAnaliseInstagram() {
     },
   })
 
+  const retomarAnalise = useMutation({
+    mutationFn: (postId: number) => instagramService.retomarAnalise(postId),
+    onSuccess: () => {
+      setResultadoFinal(null)
+      setPoll(true)
+    },
+  })
+
   const statusAnalise = useQuery({
     queryKey: ["instagram-status"],
     queryFn: instagramService.consultarStatus,
@@ -41,6 +49,7 @@ export function useAnaliseInstagram() {
 
   return {
     dispararAnalise,
+    retomarAnalise,
     statusAnalise,
     pollingAtivo: poll,
     resultadoFinal,

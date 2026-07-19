@@ -8,6 +8,9 @@ function paramsParaFiltros(params: URLSearchParams): FiltrosLeads {
     status: (params.get("status") as StatusLead | "") ?? "",
     nicho: params.get("nicho") ?? "",
     nota_min: (params.get("nota_min") as FiltrosLeads["nota_min"]) ?? "",
+    ordenar: (params.get("ordenar") as FiltrosLeads["ordenar"]) ?? "",
+    site_status: (params.get("site_status") as FiltrosLeads["site_status"]) ?? "",
+    followup: "",
   }
 }
 
@@ -31,6 +34,8 @@ export function useFiltrosLeads() {
           if (novo.status) novosParams.set("status", novo.status)
           if (novo.nicho) novosParams.set("nicho", novo.nicho)
           if (novo.nota_min) novosParams.set("nota_min", novo.nota_min)
+          if (novo.ordenar) novosParams.set("ordenar", novo.ordenar)
+          if (novo.site_status) novosParams.set("site_status", novo.site_status)
           return novosParams
         },
         { replace: true }
@@ -42,7 +47,8 @@ export function useFiltrosLeads() {
   const limpar = useCallback(() => setFiltros(FILTROS_VAZIOS), [setFiltros])
 
   const filtrosEmUso = Boolean(
-    filtros.busca || filtros.status || filtros.nicho || filtros.nota_min
+    filtros.busca || filtros.status || filtros.nicho || filtros.nota_min ||
+    filtros.ordenar || filtros.site_status
   )
 
   return { filtros, setFiltros, limpar, filtrosEmUso }

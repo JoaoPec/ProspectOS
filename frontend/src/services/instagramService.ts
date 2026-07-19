@@ -20,6 +20,11 @@ export const instagramService = {
   consultarStatus: () =>
     httpClient.get<EstadoAnaliseInstagram>("/api/instagram/status"),
 
+  retomarAnalise: (postId: number) =>
+    httpClient.post<{ ok: true; post_id: number }>(
+      `/api/instagram/posts/${postId}/retomar`
+    ),
+
   listarPosts: (arquivados = false) =>
     httpClient.get<{ posts: PostInstagram[] }>(
       `/api/instagram/posts${arquivados ? "?arquivados=true" : ""}`

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { configService } from "@/services/configService"
+import { configService, type PerfilVendedor } from "@/services/configService"
 import type { ProvedorIA } from "@/types/config"
 
 export function useConfiguracoes() {
@@ -19,6 +19,25 @@ export function useSalvarConfiguracao() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["configuracoes"] })
       toast.success("Chave de API salva.")
+    },
+  })
+}
+
+export function usePerfilVendedor() {
+  return useQuery({
+    queryKey: ["perfil-vendedor"],
+    queryFn: configService.obterPerfilVendedor,
+  })
+}
+
+export function useSalvarPerfilVendedor() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (perfil: PerfilVendedor) => configService.salvarPerfilVendedor(perfil),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["perfil-vendedor"] })
+      toast.success("Perfil salvo - as próximas copies já saem na sua voz.")
     },
   })
 }

@@ -36,7 +36,7 @@ export function NavCard({
       </div>
       <div className="min-w-0 flex-1">
         <p className="font-medium">{titulo}</p>
-        <p className="truncate text-xs text-muted-foreground">{descricao}</p>
+        <p className="line-clamp-2 text-xs text-muted-foreground">{descricao}</p>
       </div>
       <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
     </Link>

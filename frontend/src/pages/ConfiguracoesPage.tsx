@@ -2,15 +2,17 @@ import { ArrowLeft } from "lucide-react"
 import { Link } from "react-router-dom"
 import { Header } from "@/components/layout/Header"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PerfilVendedorCard } from "@/components/configuracoes/PerfilVendedorCard"
 import { ProvedorApiCard } from "@/components/configuracoes/ProvedorApiCard"
 import { ScraperProxyCard } from "@/components/configuracoes/ScraperProxyCard"
 import { SomConfigCard } from "@/components/configuracoes/SomConfigCard"
 import { useConfiguracoes } from "@/hooks/useConfiguracoes"
 
-const TITULOS: Record<"gemini" | "groq" | "nvidia", string> = {
+const TITULOS: Record<"gemini" | "groq" | "nvidia" | "pagespeed", string> = {
   gemini: "Google Gemini",
   groq: "Groq",
   nvidia: "NVIDIA",
+  pagespeed: "Google PageSpeed (opcional)",
 }
 
 export function ConfiguracoesPage() {
@@ -28,6 +30,16 @@ export function ConfiguracoesPage() {
           <ArrowLeft className="size-4" />
           Voltar para o dashboard
         </Link>
+
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight">Seu perfil</h2>
+          <p className="text-sm text-muted-foreground">
+            Quem envia as mensagens de prospecção - as copies geradas por IA
+            saem assinadas e na sua voz.
+          </p>
+        </div>
+
+        <PerfilVendedorCard />
 
         <div>
           <h2 className="text-xl font-semibold tracking-tight">
@@ -48,7 +60,7 @@ export function ConfiguracoesPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {(["gemini", "groq", "nvidia"] as const).map((provedor) => (
+            {(["gemini", "groq", "nvidia", "pagespeed"] as const).map((provedor) => (
               <ProvedorApiCard
                 key={provedor}
                 provedor={provedor}
@@ -56,6 +68,11 @@ export function ConfiguracoesPage() {
                 config={data[provedor]}
               />
             ))}
+            <p className="text-xs text-muted-foreground">
+              A chave do PageSpeed é opcional: adiciona a nota oficial de
+              desempenho do Google no diagnóstico em PDF (funciona sem chave
+              para uso leve, mas com limites).
+            </p>
           </div>
         )}
 

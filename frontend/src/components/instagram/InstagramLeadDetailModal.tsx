@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select"
 import { useInstagramLeadMutations } from "@/hooks/useInstagramLeadMutations"
 import { useClipboard } from "@/hooks/useClipboard"
+import { ajustarSaudacao } from "@/lib/saudacao"
 import { InstagramTagsFollowupForm } from "@/components/instagram/InstagramTagsFollowupForm"
 import { InstagramObservacoesForm } from "@/components/instagram/InstagramObservacoesForm"
 import { InstagramLeadHistoryAccordion } from "@/components/instagram/InstagramLeadHistoryAccordion"
@@ -74,7 +75,7 @@ export function InstagramLeadDetailModal({
 
   return (
     <Dialog open={Boolean(lead)} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[88vh] max-w-[calc(100%-2rem)] overflow-y-auto p-0 sm:max-w-3xl">
+      <DialogContent className="max-h-[90vh] max-w-[calc(100%-2rem)] overflow-y-auto p-0 sm:max-w-5xl">
         <DialogHeader className="border-b border-border px-6 py-4">
           <div className="flex items-center gap-2">
             <DialogTitle>@{lead.username}</DialogTitle>
@@ -205,7 +206,7 @@ export function InstagramLeadDetailModal({
                     size="sm"
                     variant="outline"
                     className="w-fit"
-                    onClick={() => copiar(sugestaoDm)}
+                    onClick={() => copiar(ajustarSaudacao(sugestaoDm))}
                   >
                     <Copy className="size-4" />
                     {copiado ? "Copiado!" : "Copiar sugestão de DM"}

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom"
-import { Clock } from "lucide-react"
+import { CheckCircle2, Clock, Handshake, MapPin, Percent, Users } from "lucide-react"
+import { InstagramIcon } from "@/components/icons/InstagramIcon"
 import { StatTile } from "@/components/dashboard/StatTile"
 import { Skeleton } from "@/components/ui/skeleton"
 import { MetaSemanalCard } from "@/components/dashboard/MetaSemanalCard"
@@ -14,8 +15,8 @@ export function VisaoGeralCombinada() {
 
   if (isLoading || !metricas) {
     return (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {Array.from({ length: 5 }).map((_, i) => (
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, i) => (
           <Skeleton key={i} className="h-[74px]" />
         ))}
       </div>
@@ -27,31 +28,47 @@ export function VisaoGeralCombinada() {
       <MetaSemanalCard />
 
       <div>
-        <h2 className="mb-2 text-sm font-medium text-muted-foreground">
-          Visão geral (Google Maps + Instagram)
+        <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Visão geral · Google Maps + Instagram
         </h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
-          <StatTile rotulo="Leads ativos" valor={metricas.total} />
-          <StatTile rotulo="Ativos no Maps" valor={metricas.maps.total} />
-          <StatTile rotulo="Ativos no Instagram" valor={metricas.instagram.total} />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          <StatTile
+            rotulo="Leads ativos"
+            valor={metricas.total}
+            icone={<Users className="size-4" />}
+          />
+          <StatTile
+            rotulo="No Maps"
+            valor={metricas.maps.total}
+            icone={<MapPin className="size-4" />}
+          />
+          <StatTile
+            rotulo="No Instagram"
+            valor={metricas.instagram.total}
+            icone={<InstagramIcon className="size-4" />}
+          />
           <StatTile
             rotulo="Contatados"
             valor={metricas.por_status.contatado ?? 0}
+            icone={<CheckCircle2 className="size-4" />}
           />
           <StatTile
             rotulo="Fechados"
             valor={metricas.por_status.fechou ?? 0}
             variante="destaque"
+            icone={<Handshake className="size-4" />}
           />
           <StatTile
-            rotulo="Taxa de conversão"
+            rotulo="Conversão"
             valor={`${metricas.taxa_conversao}%`}
             variante="destaque"
+            icone={<Percent className="size-4" />}
           />
           <StatTile
-            rotulo="Follow-ups p/ hoje"
+            rotulo="Follow-ups hoje"
             valor={metricas.lembretes_hoje}
             variante={metricas.lembretes_hoje > 0 ? "alerta" : "default"}
+            icone={<Clock className="size-4" />}
           />
         </div>
       </div>

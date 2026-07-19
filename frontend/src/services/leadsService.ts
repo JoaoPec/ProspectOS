@@ -19,6 +19,9 @@ function montarQueryString(
   if (filtros.status) params.set("status", filtros.status)
   if (filtros.nicho) params.set("nicho", filtros.nicho)
   if (filtros.nota_min) params.set("nota_min", filtros.nota_min)
+  if (filtros.ordenar) params.set("ordenar", filtros.ordenar)
+  if (filtros.site_status) params.set("site_status", filtros.site_status)
+  if (filtros.followup) params.set("followup", filtros.followup)
   params.set("limit", String(TAMANHO_PAGINA))
   params.set("offset", String(offset))
   return params.toString()
@@ -118,6 +121,15 @@ export const leadsService = {
       "/api/leads/bulk-excluir",
       { place_ids: placeIds }
     ),
+
+  reanalisarSite: (placeId: string) =>
+    httpClient.post<{
+      ok: true
+      site_url: string | null
+      site_status: "sem_site" | "site_ruim" | "site_ok"
+      site_problemas: string | null
+      site_checklist: { tem: string[]; falta: string[] } | null
+    }>(`/api/leads/${encodeURIComponent(placeId)}/reanalisar-site`),
 }
 
 export const EXPORTAR_CSV_URL = "/api/exportar"
@@ -128,6 +140,7 @@ export function urlExportarCsv(filtros: Partial<FiltrosLeads>): string {
   if (filtros.status) params.set("status", filtros.status)
   if (filtros.nicho) params.set("nicho", filtros.nicho)
   if (filtros.nota_min) params.set("nota_min", filtros.nota_min)
+  if (filtros.site_status) params.set("site_status", filtros.site_status)
   const query = params.toString()
   return `${EXPORTAR_CSV_URL}${query ? `?${query}` : ""}`
 }

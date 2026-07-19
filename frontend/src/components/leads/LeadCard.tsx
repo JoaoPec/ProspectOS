@@ -1,13 +1,15 @@
-import { Archive, Star } from "lucide-react"
+import { Archive, Flame, Star } from "lucide-react"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { formatarNota, followupVencidoOuHoje } from "@/lib/formatters"
 import { useLeadMutations } from "@/hooks/useLeadMutations"
 import { StatusBadge } from "@/components/leads/StatusBadge"
+import { SiteStatusBadge } from "@/components/leads/SiteStatusBadge"
 import { TagChips } from "@/components/leads/TagChips"
 import { FollowupBadge } from "@/components/leads/FollowupBadge"
 import { LeadDificilBadge } from "@/components/leads/LeadDificilBadge"
+import { InstagramIcon } from "@/components/icons/InstagramIcon"
 import type { Lead } from "@/types/lead"
 
 interface LeadCardProps {
@@ -40,7 +42,7 @@ export function LeadCard({
       }}
       aria-label={`Abrir detalhes de ${lead.nome}`}
       className={cn(
-        "relative flex cursor-pointer flex-col gap-2 rounded-xl border border-border bg-card p-4 text-left shadow-sm transition-colors hover:bg-accent/40",
+        "relative flex cursor-pointer flex-col gap-2 rounded-xl border border-border bg-card p-4 text-left shadow-sm transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         vencido && "ring-2 ring-warning",
         selecionado && "ring-2 ring-primary"
       )}
@@ -72,12 +74,39 @@ export function LeadCard({
 
       <TagChips tags={lead.tags} />
 
+      <div className="flex flex-wrap items-center gap-1.5">
+        <SiteStatusBadge
+          siteStatus={lead.site_status}
+          siteProblemas={lead.site_problemas}
+        />
+        {lead.instagram_url && (
+          <a
+            href={lead.instagram_url}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            title={`Abrir Instagram do negócio: ${lead.instagram_url}`}
+            className="inline-flex items-center text-instagram-mid hover:opacity-80"
+            aria-label="Abrir Instagram do negócio"
+          >
+            <InstagramIcon className="size-3.5" />
+          </a>
+        )}
+      </div>
+
       <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
         <Star className="size-3.5 fill-warning text-warning" />
         <span className="font-medium text-foreground">
           {formatarNota(lead.nota)}
         </span>
         <span>({lead.num_avaliacoes ?? 0} avaliações)</span>
+        <span
+          className="ml-auto inline-flex items-center gap-0.5 rounded-full bg-primary/10 px-1.5 py-0.5 font-medium text-primary"
+          title="Score de prioridade (nota + volume de avaliações + situação do site)"
+        >
+          <Flame className="size-3" />
+          {lead.score}
+        </span>
       </div>
 
       {lead.lead_dificil && (

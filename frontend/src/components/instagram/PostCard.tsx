@@ -1,5 +1,5 @@
 import { motion } from "framer-motion"
-import { Archive, Clock, RotateCcw, Users } from "lucide-react"
+import { Archive, Clock, Play, RotateCcw, Users } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { InstagramIcon } from "@/components/icons/InstagramIcon"
@@ -15,6 +15,7 @@ interface PostCardProps {
   onArquivar?: () => void
   onDesarquivar?: () => void
   onExcluirDefinitivamente?: () => void
+  onRetomar?: () => void
 }
 
 const LABEL_ETAPA: Record<PostInstagram["etapa"], string> = {
@@ -37,6 +38,7 @@ export function PostCard({
   onArquivar,
   onDesarquivar,
   onExcluirDefinitivamente,
+  onRetomar,
 }: PostCardProps) {
   const { contagem_leads: contagem } = post
   const totalPerfis = contagem.total ?? 0
@@ -55,7 +57,7 @@ export function PostCard({
       }}
       aria-label={`Abrir leads do post ${post.post_url}`}
       className={cn(
-        "flex cursor-pointer flex-col gap-3 rounded-xl border border-border bg-gradient-to-br from-instagram-start/[0.06] via-card to-instagram-end/[0.06] p-4 text-left shadow-sm transition-colors hover:from-instagram-start/[0.1] hover:to-instagram-end/[0.1]",
+        "flex cursor-pointer flex-col gap-3 rounded-xl border border-border bg-gradient-to-br from-instagram-start/[0.06] via-card to-instagram-end/[0.06] p-4 text-left shadow-sm transition-colors hover:from-instagram-start/[0.1] hover:to-instagram-end/[0.1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         selecionado && "ring-2 ring-primary"
       )}
     >
@@ -81,9 +83,33 @@ export function PostCard({
       </div>
 
       {post.etapa !== "concluido" ? (
-        <Badge variant="outline" className="w-fit">
-          {LABEL_ETAPA[post.etapa]}
-        </Badge>
+        <div className="space-y-1.5">
+          <Badge
+            variant="outline"
+            className={cn("w-fit", post.etapa === "erro" && "border-destructive/40 text-destructive")}
+          >
+            {LABEL_ETAPA[post.etapa]}
+          </Badge>
+          {post.etapa === "erro" && post.erro_mensagem && (
+            <p className="line-clamp-3 text-xs text-muted-foreground">
+              {post.erro_mensagem}
+            </p>
+          )}
+          {post.etapa === "erro" && post.pode_retomar && onRetomar && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              onClick={(e) => {
+                e.stopPropagation()
+                onRetomar()
+              }}
+            >
+              <Play className="size-3.5" />
+              Retomar análise
+            </Button>
+          )}
+        </div>
       ) : (
         <div className="flex flex-wrap gap-1.5">
           {(contagem.alta ?? 0) > 0 && (

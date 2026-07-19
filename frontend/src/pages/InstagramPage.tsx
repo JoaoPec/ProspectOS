@@ -28,7 +28,20 @@ export function InstagramPage() {
   const [busca, setBusca] = useState("")
   const [ordenacaoPrioridade, setOrdenacaoPrioridade] =
     useState<OrdenacaoPrioridade>("")
-  const { dispararAnalise, statusAnalise, pollingAtivo } = useAnaliseInstagram()
+  const { dispararAnalise, retomarAnalise, statusAnalise, pollingAtivo } =
+    useAnaliseInstagram()
+
+  const handleRetomar = (postId: number) => {
+    retomarAnalise.mutate(postId, {
+      onSuccess: () => {
+        setPostSelecionadoId(postId)
+        toast.success("Análise retomada de onde parou.")
+      },
+      onError: (erro) => {
+        toast.error(erro instanceof ApiError ? erro.message : "Erro ao retomar análise.")
+      },
+    })
+  }
 
   const handleAnalisar = () => {
     const urlLimpa = url.trim()
@@ -95,6 +108,7 @@ export function InstagramPage() {
         <PostList
           postSelecionadoId={postSelecionadoId}
           onSelecionarPost={setPostSelecionadoId}
+          onRetomar={pollingAtivo ? undefined : handleRetomar}
         />
 
         {postSelecionadoId !== null && (

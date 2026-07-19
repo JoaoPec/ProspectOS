@@ -9,6 +9,7 @@ import { LeadFilterBar } from "@/components/filters/LeadFilterBar"
 import { LeadGrid } from "@/components/leads/LeadGrid"
 import { LeadDetailModal } from "@/components/lead-detail/LeadDetailModal"
 import { NovaBuscaModal } from "@/components/search-modal/NovaBuscaModal"
+import { HistoricoBuscas } from "@/components/search-modal/HistoricoBuscas"
 import { BuscaFloatingIndicator } from "@/components/search-modal/BuscaFloatingIndicator"
 import { useFiltrosLeads } from "@/hooks/useFiltrosLeads"
 import { useBusca } from "@/hooks/useBusca"
@@ -62,6 +63,8 @@ export function LeadsMapsPage() {
         <GoogleMapsBanner />
 
         <MetricsDashboard />
+
+        <HistoricoBuscas />
 
         <div className="flex flex-wrap items-center justify-between gap-2">
           <LeadFilterBar

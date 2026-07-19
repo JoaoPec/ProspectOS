@@ -3,7 +3,10 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { queryClient } from "@/lib/queryClient"
+import { PaletaComando } from "@/components/shared/PaletaComando"
 import { DashboardPage } from "@/pages/DashboardPage"
+import { TarefasPage } from "@/pages/TarefasPage"
+import { SessaoProspeccaoPage } from "@/pages/SessaoProspeccaoPage"
 import { LeadsMapsPage } from "@/pages/LeadsMapsPage"
 import { AnalyticsPage } from "@/pages/AnalyticsPage"
 import { InstagramPage } from "@/pages/InstagramPage"
@@ -17,8 +20,11 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
+          <PaletaComando />
           <Routes>
             <Route path="/" element={<DashboardPage />} />
+            <Route path="/tarefas" element={<TarefasPage />} />
+            <Route path="/sessao" element={<SessaoProspeccaoPage />} />
             <Route path="/leads" element={<LeadsMapsPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/instagram" element={<InstagramPage />} />

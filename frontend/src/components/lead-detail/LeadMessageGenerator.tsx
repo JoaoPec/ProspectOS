@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { TemplateSelector } from "@/components/shared/TemplateSelector"
 import { useClipboard } from "@/hooks/useClipboard"
+import { ajustarSaudacao } from "@/lib/saudacao"
 import { formatarTempoRelativo } from "@/lib/formatters"
 import type { UseMutationResult } from "@tanstack/react-query"
 import type { GerarMensagemResposta, Lead } from "@/types/lead"
@@ -93,7 +94,7 @@ export function LeadMessageGenerator({
           <MessageCircleReply className="size-4" />
           Gerar copy de follow-up
         </Button>
-        <Button size="sm" variant="outline" onClick={() => copiar(mensagem)}>
+        <Button size="sm" variant="outline" onClick={() => copiar(ajustarSaudacao(mensagem))}>
           <Copy className="size-4" />
           {copiado ? "Copiado!" : "Copiar"}
         </Button>

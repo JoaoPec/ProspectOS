@@ -37,6 +37,12 @@ export interface Lead {
   follow_ups_enviados: number
   ultimo_followup_em: string | null
   lead_dificil: boolean
+  score: number
+  site_url: string | null
+  site_status: "sem_site" | "site_ruim" | "site_ok" | null
+  site_problemas: string | null
+  site_checklist: { tem: string[]; falta: string[] } | null
+  instagram_url: string | null
 }
 
 export interface HistoricoStatusItem {
@@ -50,6 +56,10 @@ export interface FiltrosLeads {
   status: StatusLead | ""
   nicho: string
   nota_min: "" | "4" | "4.5" | "5"
+  ordenar: "" | "score"
+  site_status: "" | "sem_site" | "site_ruim" | "site_ok"
+  /** Não aparece na barra de filtros - usado pela fila da sessão de prospecção */
+  followup: "" | "vencido"
 }
 
 export const FILTROS_VAZIOS: FiltrosLeads = {
@@ -57,6 +67,9 @@ export const FILTROS_VAZIOS: FiltrosLeads = {
   status: "",
   nicho: "",
   nota_min: "",
+  ordenar: "",
+  site_status: "",
+  followup: "",
 }
 
 export interface GerarMensagemResposta {

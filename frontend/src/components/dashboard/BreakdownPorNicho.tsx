@@ -1,4 +1,6 @@
+import { PieChart } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { EmptyStateCard } from "@/components/shared/EmptyStateCard"
 import type { NichoInstagramAnalytics } from "@/types/instagram"
 
 interface BreakdownPorNichoProps {
@@ -19,12 +21,15 @@ export function BreakdownPorNicho({
   if (nichos.length === 0) {
     return (
       <div className="rounded-xl border border-border bg-card p-4">
-        <h3 className="mb-2 text-sm font-medium text-muted-foreground">
+        <h3 className="mb-4 text-sm font-medium text-muted-foreground">
           Conversão por nicho
         </h3>
-        <p className="text-sm text-muted-foreground">
-          Nenhum lead com nicho registrado ainda.
-        </p>
+        <EmptyStateCard
+          icone={<PieChart className="size-5" />}
+          titulo="Nenhum nicho ainda"
+          descricao="Os nichos vêm das suas buscas (ex.: 'clínica de estética em Londrina') - rode uma busca para começar a comparar a conversão por nicho."
+          className="h-[240px] border-0 bg-transparent"
+        />
       </div>
     )
   }

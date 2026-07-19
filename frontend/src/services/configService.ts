@@ -20,4 +20,16 @@ export const configService = {
       "/api/configuracoes/scraper-proxies",
       { proxies }
     ),
+
+  obterPerfilVendedor: () =>
+    httpClient.get<PerfilVendedor>("/api/configuracoes/perfil-vendedor"),
+
+  salvarPerfilVendedor: (perfil: PerfilVendedor) =>
+    httpClient.post<{ ok: true }>("/api/configuracoes/perfil-vendedor", perfil),
+}
+
+export interface PerfilVendedor {
+  nome: string
+  apresentacao: string
+  diferencial: string
 }

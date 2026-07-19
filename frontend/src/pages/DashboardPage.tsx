@@ -1,4 +1,4 @@
-import { BarChart3, MapPin } from "lucide-react"
+import { BarChart3, ListTodo, MapPin, Zap } from "lucide-react"
 import { Header } from "@/components/layout/Header"
 import { InstagramIcon } from "@/components/icons/InstagramIcon"
 import { VisaoGeralCombinada } from "@/components/dashboard/VisaoGeralCombinada"
@@ -19,7 +19,19 @@ export function DashboardPage() {
           <BreakdownNichoCombinado />
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <NavCard
+            to="/sessao"
+            titulo="Sessão de prospecção"
+            descricao="Um lead por vez, do mais quente ao mais frio - modo foco"
+            icone={<Zap className="size-5" />}
+          />
+          <NavCard
+            to="/tarefas"
+            titulo="Tarefas de hoje"
+            descricao="Follow-ups vencidos e leads quentes com abordagem em 1 clique"
+            icone={<ListTodo className="size-5" />}
+          />
           <NavCard
             to="/leads"
             titulo="Leads do Maps"

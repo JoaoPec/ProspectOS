@@ -1,4 +1,4 @@
-export type ProvedorIA = "gemini" | "groq" | "nvidia"
+export type ProvedorIA = "gemini" | "groq" | "nvidia" | "pagespeed"
 
 export interface ConfiguracaoProvedor {
   configurada: boolean

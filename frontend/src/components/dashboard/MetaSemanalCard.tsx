@@ -96,14 +96,19 @@ export function MetaSemanalCard() {
         </button>
       </div>
 
-      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className={cn(
-            "h-full rounded-full transition-all",
-            atingiu ? "bg-success" : "bg-primary"
-          )}
-          style={{ width: `${Math.min(meta.porcentagem, 100)}%` }}
-        />
+      <div className="flex items-center gap-2">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all",
+              atingiu ? "bg-success" : "bg-gradient-to-r from-primary/70 to-primary"
+            )}
+            style={{ width: `${Math.min(meta.porcentagem, 100)}%` }}
+          />
+        </div>
+        <span className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
+          {Math.round(meta.porcentagem)}%
+        </span>
       </div>
 
       <p className="mt-1.5 text-xs text-muted-foreground">

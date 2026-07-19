@@ -4,7 +4,7 @@ import { buscaService } from "@/services/buscaService"
 import { useInvalidarLeads } from "@/hooks/useInvalidarLeads"
 import { notificar, pedirPermissaoNotificacao } from "@/hooks/useNotificacaoNavegador"
 import { tocarSom } from "@/hooks/useSom"
-import type { EstadoBusca } from "@/types/busca"
+import type { AreaBuscaPayload, EstadoBusca } from "@/types/busca"
 
 export function useBusca() {
   const queryClient = useQueryClient()
@@ -12,13 +12,21 @@ export function useBusca() {
   const [poll, setPoll] = useState(false)
   const [resultadoFinal, setResultadoFinal] = useState<EstadoBusca | null>(null)
 
+  const aoDisparar = () => {
+    setResultadoFinal(null)
+    setPoll(true)
+    pedirPermissaoNotificacao()
+  }
+
   const dispararBusca = useMutation({
     mutationFn: (queries: string) => buscaService.disparar(queries),
-    onSuccess: () => {
-      setResultadoFinal(null)
-      setPoll(true)
-      pedirPermissaoNotificacao()
-    },
+    onSuccess: aoDisparar,
+  })
+
+  const dispararBuscaMapa = useMutation({
+    mutationFn: ({ nichos, areas }: { nichos: string[]; areas: AreaBuscaPayload[] }) =>
+      buscaService.dispararPorMapa(nichos, areas),
+    onSuccess: aoDisparar,
   })
 
   const statusBusca = useQuery({
@@ -44,6 +52,7 @@ export function useBusca() {
 
   return {
     dispararBusca,
+    dispararBuscaMapa,
     statusBusca,
     pollingAtivo: poll,
     resultadoFinal,

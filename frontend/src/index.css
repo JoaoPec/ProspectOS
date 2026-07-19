@@ -89,11 +89,12 @@
     --google-maps-start: oklch(0.58 0.14 165);
     --google-maps-mid: oklch(0.66 0.17 145);
     --google-maps-end: oklch(0.73 0.18 125);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
+    /* rampa sequencial da marca (claro → escuro): estágios do funil e magnitudes */
+    --chart-1: oklch(0.85 0.1 152);
+    --chart-2: oklch(0.72 0.16 150);
+    --chart-3: oklch(0.58 0.15 148);
+    --chart-4: oklch(0.44 0.12 147);
+    --chart-5: oklch(0.33 0.09 147);
     --radius: 0.75rem;
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
@@ -135,11 +136,12 @@
     --google-maps-start: oklch(0.63 0.14 165);
     --google-maps-mid: oklch(0.71 0.17 145);
     --google-maps-end: oklch(0.78 0.18 125);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
+    /* rampa sequencial no escuro: escuro → claro (o mais claro se destaca no fundo escuro) */
+    --chart-1: oklch(0.42 0.09 152);
+    --chart-2: oklch(0.55 0.13 150);
+    --chart-3: oklch(0.68 0.17 149);
+    --chart-4: oklch(0.82 0.15 150);
+    --chart-5: oklch(0.9 0.11 151);
     --sidebar: oklch(0.205 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
     --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -169,4 +171,22 @@
   100% {
     transform: translateX(333%);
   }
+}
+
+/* Mapa (Leaflet) - integra o mapa ao tema do app */
+.leaflet-container {
+  background: var(--muted);
+  font: inherit;
+}
+.dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9) saturate(0.6);
+}
+.dark .leaflet-control-attribution {
+  background: rgb(0 0 0 / 0.6);
+  color: var(--muted-foreground);
+}
+.dark .leaflet-control-zoom a {
+  background: var(--card);
+  color: var(--foreground);
+  border-color: var(--border);
 }

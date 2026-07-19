@@ -34,6 +34,7 @@ export interface PostInstagram {
   nicho_alvo: string | null
   arquivado_em: string | null
   contagem_leads: ContagemLeadsPorPrioridade
+  pode_retomar: boolean
 }
 
 export interface RespostaMarcarFollowup {

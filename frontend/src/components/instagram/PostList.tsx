@@ -7,12 +7,14 @@ interface PostListProps {
   postSelecionadoId: number | null
   onSelecionarPost: (postId: number) => void
   arquivados?: boolean
+  onRetomar?: (postId: number) => void
 }
 
 export function PostList({
   postSelecionadoId,
   onSelecionarPost,
   arquivados = false,
+  onRetomar,
 }: PostListProps) {
   const { posts, isLoading } = usePostsInstagram(arquivados)
   const { arquivar, desarquivar, excluirDefinitivamente } =
@@ -57,6 +59,7 @@ export function PostList({
               ? () => excluirDefinitivamente.mutate(post.id)
               : undefined
           }
+          onRetomar={onRetomar ? () => onRetomar(post.id) : undefined}
         />
       ))}
     </div>
