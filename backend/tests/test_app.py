@@ -8,13 +8,18 @@ from datetime import datetime, timedelta
 import pytest
 
 import app as app_module
+import constantes
+import db
+import jobs
 import processar
 
 
 @pytest.fixture
 def cliente(tmp_path, monkeypatch):
     caminho_banco_teste = tmp_path / "leads_teste.db"
-    monkeypatch.setattr(app_module, "CAMINHO_BANCO", caminho_banco_teste)
+    # todos os módulos de rotas acessam o banco via db.CAMINHO_BANCO (atributo
+    # do módulo), então um único patch redireciona o app inteiro pro banco de teste
+    monkeypatch.setattr(db, "CAMINHO_BANCO", caminho_banco_teste)
 
     conexao = sqlite3.connect(caminho_banco_teste)
     processar.preparar_banco(conexao)
@@ -46,7 +51,7 @@ def inserir_lead(place_id="lead-1", **overrides):
         campos.setdefault("nicho", nicho)
         campos.setdefault("cidade", cidade)
 
-    conexao = sqlite3.connect(app_module.CAMINHO_BANCO)
+    conexao = sqlite3.connect(db.CAMINHO_BANCO)
     conexao.execute(
         """
         INSERT INTO leads (place_id, nome, categoria, endereco, nota, num_avaliacoes,
@@ -219,7 +224,7 @@ class TestExclusaoDefinitiva:
         resposta = cliente.delete("/api/leads/lead-1")
         assert resposta.status_code == 200
 
-        conexao = sqlite3.connect(app_module.CAMINHO_BANCO)
+        conexao = sqlite3.connect(db.CAMINHO_BANCO)
         existe = conexao.execute(
             "SELECT 1 FROM leads WHERE place_id = ?", ("lead-1",)
         ).fetchone()
@@ -231,7 +236,7 @@ class TestExclusaoDefinitiva:
         resposta = cliente.delete("/api/leads/lead-1")
         assert resposta.status_code == 400
 
-        conexao = sqlite3.connect(app_module.CAMINHO_BANCO)
+        conexao = sqlite3.connect(db.CAMINHO_BANCO)
         existe = conexao.execute(
             "SELECT 1 FROM leads WHERE place_id = ?", ("lead-1",)
         ).fetchone()
@@ -253,7 +258,7 @@ class TestExclusaoDefinitiva:
         assert resposta.status_code == 200
         assert resposta.get_json()["excluidos"] == 2
 
-        conexao = sqlite3.connect(app_module.CAMINHO_BANCO)
+        conexao = sqlite3.connect(db.CAMINHO_BANCO)
         restantes = {
             r[0] for r in conexao.execute("SELECT place_id FROM leads").fetchall()
         }
@@ -274,7 +279,7 @@ class TestObservacoesETags:
 
     def test_observacoes_muito_longas_retorna_400(self, cliente):
         inserir_lead("lead-1")
-        texto_grande = "a" * (app_module.MAX_CARACTERES_OBSERVACOES + 1)
+        texto_grande = "a" * (constantes.MAX_CARACTERES_OBSERVACOES + 1)
         resposta = cliente.post(
             "/api/leads/lead-1/observacoes", json={"observacoes": texto_grande}
         )
@@ -282,7 +287,7 @@ class TestObservacoesETags:
 
     def test_tags_muito_longas_retorna_400(self, cliente):
         inserir_lead("lead-1")
-        tags_grandes = "a" * (app_module.MAX_CARACTERES_TAGS + 1)
+        tags_grandes = "a" * (constantes.MAX_CARACTERES_TAGS + 1)
         resposta = cliente.post("/api/leads/lead-1/tags", json={"tags": tags_grandes})
         assert resposta.status_code == 400
 
@@ -302,12 +307,119 @@ class TestDispararBusca:
         assert resposta.status_code == 400
 
     def test_busca_ja_rodando_retorna_409(self, cliente):
-        app_module.estado_busca["rodando"] = True
+        jobs.estado_busca["rodando"] = True
         try:
             resposta = cliente.post("/api/buscar", json={"queries": "nicho em cidade"})
             assert resposta.status_code == 409
         finally:
-            app_module.estado_busca["rodando"] = False
+            jobs.estado_busca["rodando"] = False
+
+
+AREA_VALIDA = {"lat": -23.31, "lng": -51.16, "raio_m": 5000, "rotulo": "Londrina - Paraná"}
+
+
+class TestBuscaPorMapa:
+    @pytest.fixture
+    def ambiente_busca(self, cliente, tmp_path, monkeypatch):
+        """Redireciona o queries.txt pra pasta temporária e captura o disparo da
+        thread (que nunca deve rodar de verdade nos testes)."""
+        disparos = []
+        monkeypatch.setattr(db, "APP_DIR", tmp_path)
+        monkeypatch.setattr(jobs, "iniciar_thread_busca", lambda areas=None: disparos.append(areas))
+        return cliente, tmp_path, disparos
+
+    def test_dispara_busca_por_mapa(self, ambiente_busca):
+        cliente, tmp_path, disparos = ambiente_busca
+        try:
+            resposta = cliente.post("/api/buscar", json={
+                "nichos": ["clínica de estética", "barbearia"],
+                "areas": [AREA_VALIDA],
+            })
+            assert resposta.status_code == 200
+
+            assert (tmp_path / "queries.txt").read_text(encoding="utf-8") == "clínica de estética\nbarbearia\n"
+            assert len(disparos) == 1
+            assert disparos[0] == [
+                {"lat": -23.31, "lng": -51.16, "raio_m": 5000, "rotulo": "Londrina - Paraná"}
+            ]
+        finally:
+            jobs.liberar_busca()
+
+    def test_rotulo_ausente_cai_nas_coordenadas(self, ambiente_busca):
+        cliente, _tmp_path, disparos = ambiente_busca
+        try:
+            resposta = cliente.post("/api/buscar", json={
+                "nichos": ["barbearia"],
+                "areas": [{"lat": -23.31, "lng": -51.16, "raio_m": 2000}],
+            })
+            assert resposta.status_code == 200
+            assert disparos[0][0]["rotulo"] == "-23.3100, -51.1600"
+        finally:
+            jobs.liberar_busca()
+
+    def test_sem_nichos_retorna_400(self, ambiente_busca):
+        cliente, _, _ = ambiente_busca
+        resposta = cliente.post("/api/buscar", json={"nichos": [], "areas": [AREA_VALIDA]})
+        assert resposta.status_code == 400
+
+    def test_nichos_so_com_espacos_retorna_400(self, ambiente_busca):
+        cliente, _, _ = ambiente_busca
+        resposta = cliente.post("/api/buscar", json={"nichos": ["   ", ""], "areas": [AREA_VALIDA]})
+        assert resposta.status_code == 400
+
+    def test_sem_areas_retorna_400(self, ambiente_busca):
+        cliente, _, _ = ambiente_busca
+        resposta = cliente.post("/api/buscar", json={"nichos": ["barbearia"], "areas": []})
+        assert resposta.status_code == 400
+
+    def test_excesso_de_areas_retorna_400(self, ambiente_busca):
+        cliente, _, _ = ambiente_busca
+        resposta = cliente.post("/api/buscar", json={
+            "nichos": ["barbearia"],
+            "areas": [AREA_VALIDA] * 6,
+        })
+        assert resposta.status_code == 400
+
+    def test_raio_fora_dos_limites_retorna_400(self, ambiente_busca):
+        cliente, _, _ = ambiente_busca
+        for raio in (100, 100_000):
+            resposta = cliente.post("/api/buscar", json={
+                "nichos": ["barbearia"],
+                "areas": [{**AREA_VALIDA, "raio_m": raio}],
+            })
+            assert resposta.status_code == 400
+
+    def test_coordenadas_invalidas_retorna_400(self, ambiente_busca):
+        cliente, _, _ = ambiente_busca
+        for lat, lng in ((-91, -51.16), (-23.31, 181), ("abc", -51.16)):
+            resposta = cliente.post("/api/buscar", json={
+                "nichos": ["barbearia"],
+                "areas": [{"lat": lat, "lng": lng, "raio_m": 5000}],
+            })
+            assert resposta.status_code == 400
+
+    def test_busca_por_mapa_com_busca_rodando_retorna_409(self, ambiente_busca):
+        cliente, _, _ = ambiente_busca
+        jobs.estado_busca["rodando"] = True
+        try:
+            resposta = cliente.post("/api/buscar", json={
+                "nichos": ["barbearia"], "areas": [AREA_VALIDA],
+            })
+            assert resposta.status_code == 409
+        finally:
+            jobs.estado_busca["rodando"] = False
+
+
+class TestZoomParaRaio:
+    def test_raios_comuns(self):
+        assert jobs.zoom_para_raio(1000) == 15
+        assert jobs.zoom_para_raio(5000) == 13
+        assert jobs.zoom_para_raio(10000) == 12
+        assert jobs.zoom_para_raio(50000) == 9
+
+    def test_limites(self):
+        assert jobs.zoom_para_raio(100) == 16  # raio mínimo tratado como 500m
+        assert jobs.zoom_para_raio(10_000_000) == 8  # nunca abaixo do zoom 8
 
 
 class TestMetricas:
@@ -343,7 +455,7 @@ class TestMetricas:
 
         # a coluna proximo_followup é aditiva (migração), inserir_lead não a define
         # por padrão - setamos direto via UPDATE pra simular o dado real.
-        conexao = sqlite3.connect(app_module.CAMINHO_BANCO)
+        conexao = sqlite3.connect(db.CAMINHO_BANCO)
         conexao.execute("UPDATE leads SET proximo_followup = ? WHERE place_id = ?", (hoje, "lead-1"))
         conexao.execute("UPDATE leads SET proximo_followup = ? WHERE place_id = ?", (ontem, "lead-2"))
         conexao.execute("UPDATE leads SET proximo_followup = ? WHERE place_id = ?", (amanha, "lead-3"))

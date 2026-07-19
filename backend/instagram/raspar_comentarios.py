@@ -14,7 +14,12 @@ from datetime import datetime
 from pathlib import Path
 
 from instagrapi import Client
-from instagrapi.exceptions import ClientError, LoginRequired
+from instagrapi.exceptions import (
+    ChallengeRequired,
+    ClientError,
+    LoginRequired,
+    PleaseWaitFewMinutes,
+)
 
 PASTA_SESSAO = Path(__file__).parent / "sessao"
 PASTA_COMENTARIOS = Path(__file__).parent / "comentarios"
@@ -35,8 +40,27 @@ def carregar_sessao() -> Client:
 def raspar_comentarios(url: str) -> Path:
     cliente = carregar_sessao()
 
-    media_pk = cliente.media_pk_from_url(url)
-    comentarios_brutos = cliente.media_comments(media_pk, amount=0)
+    # traduz os erros de conta/sessão do instagrapi em mensagens claras ANTES
+    # de qualquer retry - insistir com checkpoint/sessão inválida só aumenta o
+    # risco de bloqueio da conta.
+    try:
+        media_pk = cliente.media_pk_from_url(url)
+        comentarios_brutos = cliente.media_comments(media_pk, amount=0)
+    except ChallengeRequired:
+        raise RuntimeError(
+            "O Instagram pediu uma verificação de segurança (checkpoint) na sua conta. "
+            "Abra o Instagram no celular, resolva a verificação e rode py instagram\\login.py de novo."
+        )
+    except LoginRequired:
+        raise RuntimeError(
+            "A sessão do Instagram expirou ou foi invalidada. "
+            "Rode de novo: py instagram\\login.py <seu_usuario>"
+        )
+    except PleaseWaitFewMinutes:
+        raise RuntimeError(
+            "O Instagram está limitando as requisições da sua conta agora (rate limit). "
+            "Espere alguns minutos (de preferência 1 hora) e tente de novo."
+        )
 
     comentarios = [
         {"username": c.user.username, "texto": c.text}
