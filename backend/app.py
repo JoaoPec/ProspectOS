@@ -24,7 +24,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from werkzeug.exceptions import HTTPException
 
 load_dotenv()
@@ -78,6 +78,26 @@ def preparar_banco_no_startup():
 preparar_banco_no_startup()
 jobs.marcar_jobs_interrompidos()
 db.migrar_chaves_para_keyring()
+
+# ── Railway: serve frontend static files in production ────────────
+
+PASTA_FRONTEND = APP_DIR.parent / "frontend" / "dist"
+
+if PASTA_FRONTEND.is_dir():
+    @app.route("/")
+    def servir_frontend():
+        return send_from_directory(str(PASTA_FRONTEND), "index.html")
+
+    @app.route("/assets/<path:filename>")
+    def servir_assets(filename):
+        return send_from_directory(str(PASTA_FRONTEND / "assets"), filename)
+
+    @app.route("/<path:filename>")
+    def servir_arquivos(filename):
+        caminho = PASTA_FRONTEND / filename
+        if caminho.is_file():
+            return send_from_directory(str(PASTA_FRONTEND), filename)
+        return send_from_directory(str(PASTA_FRONTEND), "index.html")
 
 
 if __name__ == "__main__":

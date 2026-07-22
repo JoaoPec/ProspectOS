@@ -19,6 +19,7 @@ from pathlib import Path
 
 import db
 import ia
+import places_api
 import processar
 
 logger = logging.getLogger(__name__)
@@ -352,33 +353,34 @@ CHAVES_CONTAGENS_SOMADAS = (
 
 
 def _buscar_por_areas(areas, ambiente, data):
-    """Modo mapa: roda o scraper uma vez por área (pino + raio), processando cada
-    resultado com a cidade/rótulo do pino. Uma área que falha não derruba as
-    outras - vira um aviso no resultado final. Retorna as contagens somadas, ou
-    None se TODAS as áreas falharem (mensagem de erro já definida no estado)."""
+    """Modo mapa: usa Places API. Nicho do queries.txt, cidade do rotulo do pino."""
     total = {chave: 0 for chave in CHAVES_CONTAGENS_SOMADAS}
     avisos = []
     alguma_area_ok = False
+
+    # Le o nicho do queries.txt
+    nicho = ""
+    qf = APP_DIR / "queries.txt"
+    if qf.exists():
+        nicho = qf.read_text(encoding="utf-8").strip()
 
     for i, area in enumerate(areas, start=1):
         rotulo = area["rotulo"]
         estado_busca["area_atual"] = i
         estado_busca["etapa"] = "scraping"
-        estado_busca["mensagem"] = f"Área {i} de {len(areas)} ({rotulo}): buscando no Google Maps..."
+        estado_busca["mensagem"] = f"Area {i} de {len(areas)} ({rotulo}): buscando via Places API..."
         _atualizar_job(
             _job_id_busca, etapa="scraping", mensagem=estado_busca["mensagem"],
             progresso_atual=i, progresso_total=len(areas),
         )
 
         arquivo_bruto = APP_DIR / "saidas" / f"bruto_{data}_area{i}.csv"
-        flags_geo = [
-            "-geo", f"{area['lat']},{area['lng']}",
-            "-radius", str(area["raio_m"]),
-            "-zoom", str(zoom_para_raio(area["raio_m"])),
-        ]
-        erro = _executar_scraper(arquivo_bruto, ambiente, flags_geo)
-        if erro:
-            avisos.append(f'área "{rotulo}": {erro}')
+        query = f"{nicho} em {rotulo}" if nicho else rotulo
+        try:
+            places_api.buscar_por_texto(query, arquivo_bruto, max_results=20)
+        except Exception as e:
+            logger.exception("Places API falhou para area %s", rotulo)
+            avisos.append(f'area "{rotulo}": {e}')
             continue
 
         estado_busca["etapa"] = "verificando_sites"
@@ -438,10 +440,16 @@ def _rodar_busca_em_background(areas=None):
             if contagens is None:
                 return  # todas as áreas falharam - mensagem já definida
         else:
+            # Busca por texto: lê queries.txt e usa Places API
             arquivo_bruto = pasta_saidas / f"bruto_{data}.csv"
-            erro = _executar_scraper(arquivo_bruto, ambiente)
-            if erro:
-                estado_busca["mensagem"] = erro
+            caminho_queries = APP_DIR / "queries.txt"
+            query = caminho_queries.read_text(encoding="utf-8").strip() if caminho_queries.exists() else ""
+            estado_busca["mensagem"] = "Buscando no Google Maps via Places API..."
+            try:
+                places_api.buscar_por_texto(query, arquivo_bruto, max_results=20)
+            except Exception as e:
+                logger.exception("Places API falhou")
+                estado_busca["mensagem"] = "A busca no Google Maps falhou. Verifique a chave GOOGLE_API_KEY no .env."
                 return
 
             estado_busca["mensagem"] = "Filtrando leads e gerando WhatsApp..."

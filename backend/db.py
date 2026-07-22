@@ -15,7 +15,14 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 APP_DIR = Path(__file__).parent
-CAMINHO_BANCO = APP_DIR / "leads.db"
+# Railway: use DATABASE_URL env var or /data/leads.db if volume mounted
+_db_url = os.environ.get("DATABASE_URL", "")
+if _db_url.startswith("sqlite:///"):
+    CAMINHO_BANCO = Path(_db_url.replace("sqlite:///", ""))
+elif os.path.isdir("/data"):
+    CAMINHO_BANCO = Path("/data/leads.db")
+else:
+    CAMINHO_BANCO = APP_DIR / "leads.db"
 PASTA_BACKUPS = APP_DIR / "backups"
 MAX_BACKUPS_MANTIDOS = 20
 
