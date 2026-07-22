@@ -81,7 +81,7 @@ db.migrar_chaves_para_keyring()
 
 # ── Railway: serve frontend static files in production ────────────
 
-PASTA_FRONTEND = APP_DIR.parent / "frontend" / "dist"
+PASTA_FRONTEND = APP_DIR / "frontend" / "dist"
 
 if PASTA_FRONTEND.is_dir():
     @app.route("/")
