@@ -11,6 +11,12 @@ import type {
 } from "@/types/instagram"
 
 export const instagramService = {
+  login: (username: string, password: string) =>
+    httpClient.post<{ ok: true; mensagem: string }>("/api/instagram/login", {
+      username,
+      password,
+    }),
+
   analisar: (postUrl: string, nichoAlvo?: string) =>
     httpClient.post<{ ok: true; post_id: number }>("/api/instagram/analisar", {
       post_url: postUrl,

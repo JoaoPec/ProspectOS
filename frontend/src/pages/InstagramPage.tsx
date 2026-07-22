@@ -10,6 +10,7 @@ import { StatusSelect } from "@/components/filters/StatusSelect"
 import { NichoSelectInstagram } from "@/components/filters/NichoSelectInstagram"
 import { OrdenacaoPrioridadeSelect } from "@/components/filters/OrdenacaoPrioridadeSelect"
 import { InstagramProgress } from "@/components/instagram/InstagramProgress"
+import { InstagramLoginForm } from "@/components/instagram/InstagramLoginForm"
 import { InstagramBanner } from "@/components/instagram/InstagramBanner"
 import { PostList } from "@/components/instagram/PostList"
 import { LeadsDoPost } from "@/components/instagram/LeadsDoPost"
@@ -77,6 +78,8 @@ export function InstagramPage() {
         </Link>
 
         <InstagramBanner />
+
+        <InstagramLoginForm />
 
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input
