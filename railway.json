@@ -1,6 +1,5 @@
 {
   "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "python -m pip install -r backend/requirements.txt && cd frontend && npm install && npm run build"
+    "builder": "DOCKERFILE"
   }
 }
