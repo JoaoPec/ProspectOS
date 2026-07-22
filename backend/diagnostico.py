@@ -104,6 +104,17 @@ CUSTOS_SEM_SITE = [
     )),
 ]
 
+OPORTUNIDADES = [
+    "Botão fixo de WhatsApp para contato direto.",
+    "Agendamento online integrado ao Google.",
+    "Galeria de antes e depois (quando permitido).",
+    "SEO para aparecer melhor nas buscas do Google.",
+    "Carregamento rápido em celular e desktop.",
+    "Layout moderno e responsivo que passa credibilidade.",
+    "Depoimentos de clientes direto na página.",
+    "Mapa e localização integrados para facilitar a visita.",
+]
+
 PAGESPEED_TIMEOUT_SEGUNDOS = 60  # o PSI roda o Lighthouse de verdade: 15-40s é normal
 
 
@@ -211,6 +222,35 @@ def _tile(pdf, x, y, largura, rotulo, valor, cor_valor, subtitulo=None, fracao_b
         pdf.multi_cell(largura - 8, 3.1, _limpar_latin1(subtitulo))
 
     return altura
+
+
+def _card_oportunidade(pdf, item):
+    """Card verde com ícone de check — uma oportunidade de melhoria."""
+    x, largura = MARGEM, LARGURA_CONTEUDO
+    largura_texto = largura - 14
+    linhas = pdf.multi_cell(largura_texto, 4.3, _limpar_latin1(item), dry_run=True, output="LINES")
+    altura = 4.5 + len(linhas) * 4.3 + 2
+    y = pdf.get_y()
+
+    pdf.set_fill_color(*VERDE_FUNDO)
+    pdf.rect(x, y, largura, altura, style="F", round_corners=True, corner_radius=2)
+    pdf.set_fill_color(*VERDE)
+    pdf.rect(x, y, 1.6, altura, style="F")
+
+    # checkmark circle
+    pdf.set_fill_color(*VERDE)
+    pdf.ellipse(x + 4.5, y + 1.8, 5.4, 5.4, style="F")
+    pdf.set_xy(x + 4.5, y + 2.8)
+    pdf.set_font("helvetica", "B", 9)
+    pdf.set_text_color(255, 255, 255)
+    pdf.cell(5.4, 3.4, "+", align="C")
+
+    pdf.set_xy(x + 12, y + 2.2)
+    pdf.set_font("helvetica", "", 9.5)
+    pdf.set_text_color(*CINZA_TEXTO)
+    pdf.multi_cell(largura_texto, 4.3, _limpar_latin1(item))
+
+    pdf.set_y(y + altura + 2)
 
 
 def _card_problema(pdf, numero, titulo, explicacao):
@@ -384,6 +424,12 @@ def gerar_diagnostico_pdf(lead):
         pdf.set_text_color(150, 150, 150)
         pdf.cell(0, 5, _limpar_latin1(f"Análise automática de {lead['site_url']}"),
                  new_x="LMARGIN", new_y="NEXT")
+
+    # Oportunidades — o valor da solução
+    pdf.ln(2)
+    _titulo_secao(pdf, "Oportunidades")
+    for item in OPORTUNIDADES:
+        _card_oportunidade(pdf, item)
 
     # Proposta / CTA - assinada pelo vendedor, como uma mensagem pessoal
     nome_vendedor = db.obter_config("vendedor_nome")
