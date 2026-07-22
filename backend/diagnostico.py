@@ -109,10 +109,8 @@ OPORTUNIDADES = [
     "Agendamento online integrado ao Google.",
     "Galeria de antes e depois (quando permitido).",
     "SEO para aparecer melhor nas buscas do Google.",
-    "Carregamento rápido em celular e desktop.",
     "Layout moderno e responsivo que passa credibilidade.",
     "Depoimentos de clientes direto na página.",
-    "Mapa e localização integrados para facilitar a visita.",
 ]
 
 PAGESPEED_TIMEOUT_SEGUNDOS = 60  # o PSI roda o Lighthouse de verdade: 15-40s é normal
@@ -229,7 +227,7 @@ def _card_oportunidade(pdf, item):
     x, largura = MARGEM, LARGURA_CONTEUDO
     largura_texto = largura - 14
     linhas = pdf.multi_cell(largura_texto, 4.3, _limpar_latin1(item), dry_run=True, output="LINES")
-    altura = 4.5 + len(linhas) * 4.3 + 2
+    altura = 3.5 + len(linhas) * 4.3 + 2
     y = pdf.get_y()
 
     pdf.set_fill_color(*VERDE_FUNDO)
@@ -239,18 +237,18 @@ def _card_oportunidade(pdf, item):
 
     # checkmark circle
     pdf.set_fill_color(*VERDE)
-    pdf.ellipse(x + 4.5, y + 1.8, 5.4, 5.4, style="F")
-    pdf.set_xy(x + 4.5, y + 2.8)
+    pdf.ellipse(x + 4.5, y + 1.2, 5.4, 5.4, style="F")
+    pdf.set_xy(x + 4.5, y + 2.2)
     pdf.set_font("helvetica", "B", 9)
     pdf.set_text_color(255, 255, 255)
     pdf.cell(5.4, 3.4, "+", align="C")
 
-    pdf.set_xy(x + 12, y + 2.2)
+    pdf.set_xy(x + 12, y + 1.6)
     pdf.set_font("helvetica", "", 9.5)
     pdf.set_text_color(*CINZA_TEXTO)
     pdf.multi_cell(largura_texto, 4.3, _limpar_latin1(item))
 
-    pdf.set_y(y + altura + 2)
+    pdf.set_y(y + altura + 1)
 
 
 def _card_problema(pdf, numero, titulo, explicacao):
