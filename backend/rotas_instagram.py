@@ -33,6 +33,43 @@ bp = Blueprint("instagram", __name__)
 
 REGEX_URL_POST_INSTAGRAM = re.compile(r"^https://www\.instagram\.com/(p|reel|tv)/[A-Za-z0-9_-]+/?")
 
+# ── Login ────────────────────────────────────────────────────────
+
+@bp.route("/api/instagram/login", methods=["POST"])
+def login_instagram():
+    """Faz login no Instagram e salva a sessao no servidor."""
+    data = request.json or {}
+    usuario = (data.get("username") or "").strip()
+    senha = (data.get("password") or "").strip()
+
+    if not usuario or not senha:
+        return jsonify({"erro": "Usuário e senha são obrigatórios."}), 400
+
+    try:
+        from instagrapi import Client
+        from instagrapi.exceptions import TwoFactorRequired, BadPassword
+
+        cliente = Client()
+        try:
+            cliente.login(usuario, senha)
+        except BadPassword:
+            return jsonify({"erro": "Senha incorreta."}), 401
+        except TwoFactorRequired:
+            return jsonify({
+                "erro": "2FA detectado. Esse login só funciona sem dois fatores. "
+                        "Use uma conta sem 2FA ou faça login pelo terminal (py login.py)."
+            }), 400
+
+        from pathlib import Path
+        pasta_sessao = Path(__file__).parent / "instagram" / "sessao"
+        pasta_sessao.mkdir(parents=True, exist_ok=True)
+        caminho = pasta_sessao / f"session-{usuario}.json"
+        cliente.dump_settings(caminho)
+
+        return jsonify({"ok": True, "mensagem": f"Login feito! Sessão salva como session-{usuario}.json"})
+    except Exception as e:
+        return jsonify({"erro": f"Erro ao fazer login: {e}"}), 500
+
 
 @bp.route("/api/instagram/analisar", methods=["POST"])
 def analisar_post_instagram():
