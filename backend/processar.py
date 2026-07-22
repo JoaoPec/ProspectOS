@@ -25,7 +25,9 @@ logger = logging.getLogger(__name__)
 
 NOTA_MINIMA = 4.0
 PASTA_SAIDAS = Path(__file__).parent / "saidas"
-CAMINHO_BANCO = Path(__file__).parent / "leads.db"
+# CAMINHO_BANCO is now imported from db module to respect DATABASE_URL / volume
+import db as _db_module
+CAMINHO_BANCO = _db_module.CAMINHO_BANCO
 VERIFICACOES_PARALELAS = 6
 CAMINHO_QUERIES_PADRAO = Path(__file__).parent / "queries.txt"
 LINHAS_POR_COMMIT = 20
