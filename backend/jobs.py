@@ -377,7 +377,7 @@ def _buscar_por_areas(areas, ambiente, data):
         arquivo_bruto = APP_DIR / "saidas" / f"bruto_{data}_area{i}.csv"
         query = f"{nicho} em {rotulo}" if nicho else rotulo
         try:
-            places_api.buscar_por_texto(query, arquivo_bruto, max_results=20)
+            places_api.buscar_por_texto(query, arquivo_bruto, max_results=60)
         except Exception as e:
             logger.exception("Places API falhou para area %s", rotulo)
             avisos.append(f'area "{rotulo}": {e}')
@@ -446,7 +446,7 @@ def _rodar_busca_em_background(areas=None):
             query = caminho_queries.read_text(encoding="utf-8").strip() if caminho_queries.exists() else ""
             estado_busca["mensagem"] = "Buscando no Google Maps via Places API..."
             try:
-                places_api.buscar_por_texto(query, arquivo_bruto, max_results=20)
+                places_api.buscar_por_texto(query, arquivo_bruto, max_results=60)
             except Exception as e:
                 logger.exception("Places API falhou")
                 estado_busca["mensagem"] = "A busca no Google Maps falhou. Verifique a chave GOOGLE_API_KEY no .env."
