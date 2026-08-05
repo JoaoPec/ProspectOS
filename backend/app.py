@@ -100,21 +100,21 @@ def logout():
 LOGIN_HTML = """<!doctype html>
 <html lang="pt-BR">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ProspectOS — Entrar</title>
+<title>NexusLeads — Entrar</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0f172a;color:#e2e8f0;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
-.card{background:#1e293b;border:1px solid #334155;border-radius:16px;padding:2.5rem;width:100%;max-width:380px;text-align:center}
-h2{font-size:1.5rem;margin-bottom:.5rem}
-p{color:#94a3b8;font-size:.9rem;margin-bottom:1.5rem}
-input{width:100%;padding:.75rem 1rem;border:1px solid #475569;border-radius:10px;background:#0f172a;color:#e2e8f0;font-size:1rem;text-align:center;letter-spacing:.3em;outline:none;transition:border-color .2s}
-input:focus{border-color:#4f46e5}
-button{width:100%;margin-top:1rem;padding:.75rem;border:none;border-radius:10px;background:#4f46e5;color:white;font-size:1rem;font-weight:600;cursor:pointer;transition:background .2s}
-button:hover{background:#4338ca}
+body{background:#0c0a14;color:#e0dce8;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.card{background:#14101e;border:1px solid #2d2740;border-radius:16px;padding:2.5rem;width:100%;max-width:380px;text-align:center}
+h2{font-size:1.5rem;margin-bottom:.5rem;color:#a78bfa}
+p{color:#8b83a0;font-size:.9rem;margin-bottom:1.5rem}
+input{width:100%;padding:.75rem 1rem;border:1px solid #3d3550;border-radius:10px;background:#0c0a14;color:#e0dce8;font-size:1rem;text-align:center;letter-spacing:.3em;outline:none;transition:border-color .2s}
+input:focus{border-color:#7c3aed}
+button{width:100%;margin-top:1rem;padding:.75rem;border:none;border-radius:10px;background:#7c3aed;color:white;font-size:1rem;font-weight:600;cursor:pointer;transition:background .2s}
+button:hover{background:#6d28d9}
 </style></head>
 <body>
 <div class="card">
-<h2>🔒 ProspectOS</h2>
+<h2>🔮 NexusLeads</h2>
 <p>Digite a senha para acessar</p>
 <form method="POST">
 <input type="password" name="senha" placeholder="•••••" autofocus required>

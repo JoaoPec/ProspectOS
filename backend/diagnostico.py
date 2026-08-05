@@ -15,17 +15,17 @@ from fpdf import FPDF
 
 import db
 
-# Cores da marca (RGB)
-VERDE_ESCURO = (16, 122, 74)
-VERDE = (22, 163, 74)
-VERDE_FUNDO = (232, 246, 238)
-CINZA_TEXTO = (55, 65, 81)
-CINZA_SUAVE = (107, 114, 128)
-CINZA_CLARO = (243, 244, 246)
-CINZA_CARD = (250, 250, 251)
-LARANJA = (194, 120, 3)
-LARANJA_FUNDO = (253, 243, 224)
-VERMELHO = (185, 28, 28)
+# Cores da marca — roxo + preto (NexusLeads)
+VERDE_ESCURO = (76, 29, 149)   # roxo escuro (header)
+VERDE = (124, 58, 237)          # roxo medio (destaques)
+VERDE_FUNDO = (237, 233, 254)   # roxo clarissimo (cards)
+CINZA_TEXTO = (30, 27, 45)      # quase preto
+CINZA_SUAVE = (107, 104, 122)   # cinza medio
+CINZA_CLARO = (245, 243, 250)   # cinza lilas
+CINZA_CARD = (250, 249, 253)     # fundo card
+LARANJA = (147, 51, 234)        # roxo vibrante (problemas)
+LARANJA_FUNDO = (243, 232, 255) # roxo claro
+VERMELHO = (220, 38, 38)
 
 MARGEM = 12
 LARGURA_CONTEUDO = 186

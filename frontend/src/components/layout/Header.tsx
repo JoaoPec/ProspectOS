@@ -47,7 +47,7 @@ export function Header({ onNovaBusca, onVerIgnorados }: HeaderProps) {
         <Link to="/" className="flex items-center gap-2">
           <img src="/logo-icon.svg" alt="ProspectOS" className="size-9" />
           <h1 className="text-lg font-semibold tracking-tight sm:text-xl">
-            ProspectOS
+            NexusLeads
           </h1>
         </Link>
 
