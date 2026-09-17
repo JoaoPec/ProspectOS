@@ -366,8 +366,23 @@ class TestCopyPadrao:
         assert "Clínica Sorriso" in mensagem
         assert "nota 4.8" in mensagem
         assert "137 avaliações" in mensagem
-        assert "Salvador" in mensagem
-        assert "não é proposta genérica" in mensagem
+        assert "Posso te mandar?" in mensagem
+
+    def test_contato_nao_tem_cara_de_template(self, monkeypatch):
+        monkeypatch.setattr(db, "obter_config", lambda chave, default=None: default)
+        mensagem = ia.gerar_copy_padrao("Empresa X", 4.5)
+        baixo = mensagem.lower()
+        assert "se quiser" not in baixo
+        assert "não é proposta genérica" not in baixo
+
+    def test_partes_separa_saudacao_da_mensagem(self, monkeypatch):
+        monkeypatch.setattr(db, "obter_config", lambda chave, default=None: default)
+        saudacao, corpo = ia.gerar_copy_padrao_partes(
+            "Empresa X", 4.5, cidade="Salvador - Bahia"
+        )
+        assert "tudo bem?" in saudacao.lower()
+        assert "Salvador" in corpo
+        assert "Posso te mandar?" in corpo
 
     def test_contato_mais_de_cem_avaliacoes_usa_mais_de(self, monkeypatch):
         monkeypatch.setattr(db, "obter_config", lambda chave, default=None: default)
@@ -396,13 +411,6 @@ class TestCopyPadrao:
         assert "Empresa X" in segundo
         assert primeiro != segundo
         assert "não insisto" in primeiro
-
-    def test_fechamento_sorteado_varia_o_texto(self, monkeypatch):
-        monkeypatch.setattr(db, "obter_config", lambda chave, default=None: default)
-        monkeypatch.setattr(ia.random, "random", lambda: 0.1)  # < 0.6 → pergunta
-        monkeypatch.setattr(ia.random, "choice", lambda opcoes: opcoes[0])
-        mensagem = ia.gerar_copy_padrao("Empresa X", 4.5)
-        assert ia.PERGUNTAS_DE_FECHAMENTO[0] in mensagem
 
     def test_perfil_do_vendedor_entra_na_copy_padrao(self, monkeypatch):
         perfil = {"vendedor_nome": "Fernando"}

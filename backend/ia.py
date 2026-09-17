@@ -403,18 +403,97 @@ Orientações desta mensagem:
 # ---------------------------------------------------------------------------
 
 def _nome_curto(nome):
-    """Primeira parte do nome da empresa, sem sufixo de filial ('X - Pituba')."""
-    return (nome or "").split(" - ")[0].split("|")[0].strip() or "a empresa"
+    """Primeira parte do nome da empresa, sem sufixo de filial.
+
+    Corta em ' - ', ' -', '- ' e '|' (o Maps gera 'X- sufixo' sem espaço
+    antes do hífen). Depois remove sufixos de profissão colados.
+    """
+    limpo = (nome or "").strip()
+    for separador in (" - ", " -", "- ", "|"):
+        if separador in limpo:
+            limpo = limpo.split(separador)[0].strip()
+    return limpo or "a empresa"
+
+
+SUFIXOS_PROFISSAO = (
+    " - Nutricionista", " - Psicóloga", " - Psicóloga", " - Fisioterapeuta",
+    " - Dentista", " - Advogada", " - Advogado", " - Arquiteta", " - Arquiteto",
+)
+
+# quando o nome É uma pessoa (começa com tratamento ou não é institucional),
+# a mensagem fala COM a pessoa ("vi o perfil da Jihane"), não DA empresa.
+TRATAMENTOS_PESSOA = ("dra.", "dr.", "psicóloga", "psicólogo", "nutricionista",
+                      "fisioterapeuta", "dentista", "advogada", "advogado")
+
+
+def _vocacao(nome):
+    """Retorna ('pessoa', alvo) ou ('empresa', alvo).
+
+    Pessoa: nome começa com tratamento (Dr./Psicóloga/...) ou é um nome próprio
+    curto sem palavra institucional. Empresa: tem palavra institucional (clínica,
+    centro, especializada, &, ...) no nome.
+    """
+    limpo = _nome_curto(nome)
+    palavras = limpo.split()
+    if not palavras:
+        return "empresa", "a empresa"
+
+    if palavras[0].lower().rstrip(",") in TRATAMENTOS_PESSOA:
+        resto = " ".join(p for p in palavras[1:] if p.lower() not in ("dra.", "dr."))
+        return "pessoa", resto or limpo
+
+    institucional = (
+        "&" in limpo
+        or any(p in limpo.lower() for p in (
+            "clínica", "clinica", "centro", "espaço", "espaco", "instituto",
+            "consultório", "consultorio", "estúdio", "estudio", "studio",
+            "especializada", "especializado", "saúde", "saude", "avaliação",
+            "fisioterapia", "reabilitação", "odontologia",
+        ))
+    )
+    if not institucional and len(palavras) <= 3:
+        return "pessoa", limpo
+    return "empresa", limpo
+
+
+def _artigo(nome_curto):
+    """'da Jihane' / 'do Claudio' — heurística: termina em 'a' → feminino."""
+    primeiro = nome_curto.split()[0].lower() if nome_curto.split() else ""
+    feminino = primeiro.endswith("a") or primeiro in ("jihane", "carine", "claudineia")
+    return "da " if feminino else "do "
+
+
+def _artigo_direto(nome_curto):
+    """Forma de objeto direto: 'a Claudineia' / 'o Claudio'."""
+    return ("a " if _artigo(nome_curto) == "da " else "o ") + nome_curto
+
+
+def _categoria_legivel(categoria):
+    """Categoria pronta pra frase: acento corrigido e forma que flui no texto.
+
+    'psicologo' -> 'psicólogo' (o Maps grava sem acento); 'fisioterapeuta' e
+    'nutricionista' já são termos de busca naturais.
+    """
+    mapa = {
+        "psicologo": "psicoterapia",
+        "psicóloga": "psicoterapia",
+        "nutricionista": "nutricionista",
+        "fisioterapeuta": "fisioterapia",
+        "clínica de psicologia": "psicoterapia",
+        "clínica de estética": "estética",
+        "clínica de depilação a laser": "depilação a laser",
+        "clínica de fisioterapia": "fisioterapia",
+        "clínica de nutrição": "nutrição",
+    }
+    chave = (categoria or "").strip().lower()
+    if chave in mapa:
+        return mapa[chave]
+    return (categoria or "").replace("_", " ").strip()
 
 
 def _cidade_curta(cidade):
     """'Salvador - Bahia' -> 'Salvador'."""
     return (cidade or "").split(" - ")[0].strip()
-
-
-def _categoria_legivel(categoria):
-    """'clinica_odontologica' -> 'clínica odontológica' (quanto ao formato)."""
-    return (categoria or "").replace("_", " ").strip()
 
 
 def _detalhe_reputacao(nota, num_avaliacoes):
@@ -434,75 +513,140 @@ def _perfil_vendedor_curto():
     return "Sou desenvolvedor e crio sites para negócios locais."
 
 
-def _fechamento_template():
-    """Mesma lógica do sortear_fechamento, mas já em texto pronto pro template."""
-    if random.random() < 0.6:
-        return random.choice(PERGUNTAS_DE_FECHAMENTO)
-    data_alvo = date.today() + timedelta(days=random.randint(1, 3))
-    while data_alvo.weekday() >= 5:
-        data_alvo += timedelta(days=1)
-    dia = NOMES_DIAS_UTEIS[data_alvo.weekday()]
-    hora = random.choice(HORARIOS_COMERCIAIS)
-    return f"Se quiser, te mostro numa conversa rápida — pode ser {dia} às {hora}."
+FECHAMENTO_CONTATO = "Posso te mandar?"
+
+
+def _intro_vendedor():
+    """Duas formas de se apresentar, pra não sair sempre o mesmo trecho."""
+    nome = db.obter_config("vendedor_nome")
+    if nome and random.random() < 0.5:
+        return f"Sou o {nome}, desenvolvedor."
+    return "Sou desenvolvedor, faço sites pra negócios locais."
+
+
+def _corpos_contato(vocacao, alvo, reputacao, termo, cidade_curta):
+    """Variantes de corpo do primeiro contato — só frases com estrutura diferente.
+    Cada variante já termina com o fechamento. Cidade é opcional no texto."""
+    cidade = f" em {cidade_curta}" if cidade_curta else ""
+    rep = f" — {reputacao}." if reputacao else "."
+    rep_paren = f" ({reputacao})" if reputacao else ""
+
+    if vocacao == "pessoa":
+        variantes = [
+            (
+                f"Vi o perfil de {alvo} no Google{rep} "
+                f"Percebi que quem te pesquisa{cidade} fora do Maps não encontra um site "
+                f"seu e acaba caindo no concorrente. {_perfil_vendedor_curto()} "
+                f"Deixei pronta uma sugestão de site pensando no seu trabalho. "
+                f"{FECHAMENTO_CONTATO}"
+            ),
+        ]
+        if reputacao:
+            variantes.append(
+                f"Vi o Google avaliando o trabalho de {alvo} com {reputacao}. "
+                f"Só que quem procura por {termo}{cidade} hoje não te encontra — você ainda "
+                f"não aparece com um site próprio. {_perfil_vendedor_curto()} "
+                f"Rascunhei uma sugestão de como ficaria o seu site, olhando o seu caso. "
+                f"{FECHAMENTO_CONTATO}"
+            )
+            variantes.append(
+                f"Passei pelo perfil de {alvo} no Google{rep_paren} e o nível de avaliação me "
+                f"chamou atenção. Uma coisa, porém: quem busca por {termo}{cidade} acha "
+                f"outros profissionais primeiro, porque você não tem site próprio. "
+                f"{_perfil_vendedor_curto()} Já preparei uma sugestão pensada no seu caso. "
+                f"{FECHAMENTO_CONTATO}"
+            )
+        return variantes
+
+    # empresa
+    variantes = [
+        (
+            f"Vi o perfil de {alvo} no Google{rep} "
+            f"Vocês têm uma reputação que chama atenção, mas ainda não têm site próprio: "
+            f"quem pesquisa por {termo}{cidade} fora do Maps não encontra vocês. "
+            f"{_perfil_vendedor_curto()} Deixei pronta uma sugestão de como ficaria o site "
+            f"de vocês. {FECHAMENTO_CONTATO}"
+        ),
+    ]
+    if reputacao:
+        variantes.append(
+            f"A reputação de {alvo} no Google{rep_paren} deveria estar trabalhando também "
+            f"fora do Maps — hoje, quem busca por {termo}{cidade} não encontra um site de "
+            f"vocês. {_perfil_vendedor_curto()} Preparei uma sugestão de site pensada no "
+            f"caso de vocês. {FECHAMENTO_CONTATO}"
+        )
+        variantes.append(
+            f"Fui conhecer {alvo} pelo Google{rep_paren}. Uma coisa me chamou atenção: "
+            f"vocês ainda não têm site próprio, e quem busca por {termo}{cidade} acaba "
+            f"caindo no concorrente. {_perfil_vendedor_curto()} Já rascunhei uma sugestão "
+            f"pensada no caso de vocês. {FECHAMENTO_CONTATO}"
+        )
+    return variantes
+
+
+def _site_ruim_corpo(site_problemas, vocacao):
+    problema = (site_problemas or "").split(";")[0].strip() or "está desatualizado"
+    quem = "você" if vocacao == "pessoa" else "vocês"
+    return (
+        f"Passei pelo site {'do seu trabalho' if vocacao == 'pessoa' else 'de vocês'} e "
+        f"reparei que {problema} — quem {'te' if vocacao == 'pessoa' else 'os'} encontra "
+        f"por lá hoje acaba desistindo antes de chamar no WhatsApp. "
+        f"{_perfil_vendedor_curto()} Posso te mandar uma sugestão de como ficaria um site "
+        f"novo{'' if vocacao == 'pessoa' else ' pra vocês'}? "
+    )
+
+
+def _abertura_saudacao():
+    """Primeira bolha: só a saudação."""
+    return f"{saudacao_por_horario()}, tudo bem?"
+
+
+def gerar_copy_padrao_partes(nome, nota, num_avaliacoes=None, categoria=None, cidade=None,
+                             site_status=None, site_problemas=None, tipo="contato",
+                             follow_ups_enviados=0):
+    """Cópia padrão dividida em bolhas de WhatsApp: (saudacao, mensagem).
+
+    A saudação ("Bom dia, tudo bem?") vai sozinha, como mensagem própria; a
+    mensagem entra em seguida, sem repetir a saudação.
+    """
+    cidade_curta = _cidade_curta(cidade)
+
+    if tipo == "followup":
+        nome_curto = _nome_curto(nome)
+        if max(follow_ups_enviados, 1) <= 1:
+            corpo = (
+                f"Passando aqui rapidinho: deixei pronta a sugestão de como ficaria o site "
+                f"do {nome_curto}. Quer que eu te mande? "
+                f"Se não fizer sentido, é só me dizer que não insisto."
+            )
+        else:
+            corpo = (
+                f"Última mensagem minha por aqui. Se em algum momento quiser ver a sugestão "
+                f"que montei para o site do {nome_curto}, é só me chamar. Sucesso por aí!"
+            )
+        return _abertura_saudacao(), corpo
+
+    vocacao, alvo = _vocacao(nome)
+    if site_status == "site_ruim":
+        corpo = _site_ruim_corpo(site_problemas, vocacao).rstrip()
+    else:
+        termo = _categoria_legivel(categoria) or "o trabalho"
+        variantes = _corpos_contato(vocacao, alvo, _detalhe_reputacao(nota, num_avaliacoes),
+                                    termo, cidade_curta)
+        corpo = random.choice(variantes)
+    return _abertura_saudacao(), corpo
 
 
 def gerar_copy_padrao(nome, nota, num_avaliacoes=None, categoria=None, cidade=None,
                       site_status=None, site_problemas=None, tipo="contato",
                       follow_ups_enviados=0):
-    """Mensagem de WhatsApp sem IA, com as variáveis do lead. Retorna só o texto.
-
-    - contato: saudação + reputação real + situação do site + oferta de prévia.
-    - followup: reforço curto; 2º em diante é o último toque, sem insistência.
-    """
-    nome_curto = _nome_curto(nome)
-    cidade_curta = _cidade_curta(cidade)
-    reputacao = _detalhe_reputacao(nota, num_avaliacoes)
-    categoria_legivel = _categoria_legivel(categoria)
-
-    if tipo == "followup":
-        if max(follow_ups_enviados, 1) <= 1:
-            return (
-                f"{saudacao_por_horario()}! Passando aqui rapidinho: deixei pronta a sugestão "
-                f"de como ficaria o site do {nome_curto}. Quer que eu te mande? "
-                f"Se não fizer sentido, é só me dizer que não insisto."
-            )
-        return (
-            f"Oi! Última mensagem minha por aqui. Se em algum momento quiser ver a sugestão "
-            f"que montei para o site do {nome_curto}, é só me chamar. "
-            f"Sucesso por aí!"
-        )
-
-    # --- primeiro contato ---
-    aberturas = [
-        f"{saudacao_por_horario()}! Vi o {nome_curto} no Google",
-        f"{saudacao_por_horario()}! Encontrei o {nome_curto} no Google",
-        f"{saudacao_por_horario()}! Tudo bem? Vi o perfil do {nome_curto} no Google",
-    ]
-    abertura = random.choice(aberturas)
-    if reputacao:
-        abertura += f" ({reputacao})"
-
-    if site_status == "site_ruim":
-        problema = (site_problemas or "").split(";")[0].strip() or "está desatualizado"
-        corpo = (
-            f"Passei pelo site de vocês e reparei que {problema} — quem te encontra por lá "
-            f"hoje acaba desistindo antes de chamar no WhatsApp."
-        )
-    else:
-        termo = categoria_legivel or "o trabalho de vocês"
-        onde = f" em {cidade_curta}" if cidade_curta else ""
-        corpo = (
-            f"Reparei que vocês ainda não têm um site próprio — quem pesquisa por {termo}"
-            f"{onde} fora do Maps hoje não encontra vocês."
-        )
-
-    fechamento = _fechamento_template()
-    return (
-        f"{abertura}.\n\n"
-        f"{corpo}\n\n"
-        f"{_perfil_vendedor_curto()} Já montei uma sugestão de como ficaria o site de vocês, "
-        f"pensada no caso de vocês — não é proposta genérica. {fechamento}"
+    """Mensagem completa (uma bolha) da copy padrão, com as variáveis do lead."""
+    saudacao, corpo = gerar_copy_padrao_partes(
+        nome, nota, num_avaliacoes=num_avaliacoes, categoria=categoria, cidade=cidade,
+        site_status=site_status, site_problemas=site_problemas, tipo=tipo,
+        follow_ups_enviados=follow_ups_enviados,
     )
+    return f"{saudacao}\n\n{corpo}"
 
 
 def gerar_mensagem_com_fallback(nome, categoria, endereco, nota, tipo="contato", follow_ups_enviados=0,
