@@ -331,20 +331,84 @@ class TestPromptFollowup:
 
 
 class TestWrappers:
-    def test_gerar_mensagem_sem_chave_tem_mensagem_amigavel(self, monkeypatch):
+    def test_gerar_mensagem_sem_chave_usa_copy_padrao(self, monkeypatch):
         configurar_provedores(monkeypatch)
 
-        with pytest.raises(RuntimeError, match="Nenhuma chave de IA configurada"):
-            ia.gerar_mensagem_com_fallback("Empresa", "Categoria", "Endereço", 4.5)
+        mensagem, provedor, avisos = ia.gerar_mensagem_com_fallback(
+            "Empresa X", "Categoria", "Endereço", 4.5
+        )
+        assert provedor == "template"
+        assert "Empresa X" in mensagem
+        assert any("Nenhuma chave de IA configurada" in aviso for aviso in avisos)
 
-    def test_gerar_mensagem_todos_falharam_tem_mensagem_amigavel(self, monkeypatch):
+    def test_gerar_mensagem_todos_falharam_usa_copy_padrao(self, monkeypatch):
         def falha(system, user, temperatura=None, formato_json=False):
             raise ErroGenerico("caiu")
 
         configurar_provedores(monkeypatch, gemini=falha)
 
-        with pytest.raises(RuntimeError, match="Todos os provedores de IA configurados falharam"):
-            ia.gerar_mensagem_com_fallback("Empresa", "Categoria", "Endereço", 4.5)
+        mensagem, provedor, avisos = ia.gerar_mensagem_com_fallback(
+            "Empresa X", "Categoria", "Endereço", 4.5
+        )
+        assert provedor == "template"
+        assert "Empresa X" in mensagem
+        assert any("Todos os provedores de IA configurados falharam" in aviso for aviso in avisos)
+
+
+class TestCopyPadrao:
+    def test_contato_cita_dados_reais_do_lead(self, monkeypatch):
+        monkeypatch.setattr(db, "obter_config", lambda chave, default=None: default)
+        mensagem = ia.gerar_copy_padrao(
+            "Clínica Sorriso - Pituba", 4.8, num_avaliacoes=137,
+            categoria="clinica_odontologica", cidade="Salvador - Bahia",
+            site_status="sem_site",
+        )
+        assert "Clínica Sorriso" in mensagem
+        assert "nota 4.8" in mensagem
+        assert "137 avaliações" in mensagem
+        assert "Salvador" in mensagem
+        assert "não é proposta genérica" in mensagem
+
+    def test_contato_mais_de_cem_avaliacoes_usa_mais_de(self, monkeypatch):
+        monkeypatch.setattr(db, "obter_config", lambda chave, default=None: default)
+        mensagem = ia.gerar_copy_padrao("Empresa X", 5.0, num_avaliacoes=250)
+        assert "mais de 250 avaliações" in mensagem
+
+    def test_sem_nota_nao_inventa_numero(self, monkeypatch):
+        monkeypatch.setattr(db, "obter_config", lambda chave, default=None: default)
+        mensagem = ia.gerar_copy_padrao("Empresa X", None, num_avaliacoes=0)
+        assert "nota" not in mensagem
+        assert "avaliações" not in mensagem
+
+    def test_site_ruim_cita_o_problema_real(self, monkeypatch):
+        monkeypatch.setattr(db, "obter_config", lambda chave, default=None: default)
+        mensagem = ia.gerar_copy_padrao(
+            "Empresa X", 4.5, site_status="site_ruim",
+            site_problemas="não adaptado para celular; sem HTTPS",
+        )
+        assert "não adaptado para celular" in mensagem
+
+    def test_followup_primeiro_e_segundo_sao_diferentes(self, monkeypatch):
+        monkeypatch.setattr(db, "obter_config", lambda chave, default=None: default)
+        primeiro = ia.gerar_copy_padrao("Empresa X", 4.5, tipo="followup", follow_ups_enviados=1)
+        segundo = ia.gerar_copy_padrao("Empresa X", 4.5, tipo="followup", follow_ups_enviados=2)
+        assert "Empresa X" in primeiro
+        assert "Empresa X" in segundo
+        assert primeiro != segundo
+        assert "não insisto" in primeiro
+
+    def test_fechamento_sorteado_varia_o_texto(self, monkeypatch):
+        monkeypatch.setattr(db, "obter_config", lambda chave, default=None: default)
+        monkeypatch.setattr(ia.random, "random", lambda: 0.1)  # < 0.6 → pergunta
+        monkeypatch.setattr(ia.random, "choice", lambda opcoes: opcoes[0])
+        mensagem = ia.gerar_copy_padrao("Empresa X", 4.5)
+        assert ia.PERGUNTAS_DE_FECHAMENTO[0] in mensagem
+
+    def test_perfil_do_vendedor_entra_na_copy_padrao(self, monkeypatch):
+        perfil = {"vendedor_nome": "Fernando"}
+        monkeypatch.setattr(db, "obter_config", lambda chave, default=None: perfil.get(chave, default))
+        mensagem = ia.gerar_copy_padrao("Empresa X", 4.5)
+        assert "Sou o Fernando" in mensagem
 
 
 class TestClassificacao:

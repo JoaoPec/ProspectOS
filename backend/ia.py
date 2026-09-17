@@ -396,11 +396,122 @@ Orientações desta mensagem:
 """
 
 
+# ---------------------------------------------------------------------------
+# Copy padrão (fallback sem IA) — usada quando todos os provedores falham.
+# Montada com as variáveis REAIS do lead; nunca inventa dado. Varia abertura,
+# argumento e fechamento pra leads diferentes não receberem o mesmo texto.
+# ---------------------------------------------------------------------------
+
+def _nome_curto(nome):
+    """Primeira parte do nome da empresa, sem sufixo de filial ('X - Pituba')."""
+    return (nome or "").split(" - ")[0].split("|")[0].strip() or "a empresa"
+
+
+def _cidade_curta(cidade):
+    """'Salvador - Bahia' -> 'Salvador'."""
+    return (cidade or "").split(" - ")[0].strip()
+
+
+def _categoria_legivel(categoria):
+    """'clinica_odontologica' -> 'clínica odontológica' (quanto ao formato)."""
+    return (categoria or "").replace("_", " ").strip()
+
+
+def _detalhe_reputacao(nota, num_avaliacoes):
+    partes = []
+    if nota:
+        partes.append(f"nota {nota}")
+    if num_avaliacoes:
+        prefixo = "mais de " if num_avaliacoes >= 100 else ""
+        partes.append(f"{prefixo}{num_avaliacoes} avaliações")
+    return " e ".join(partes)
+
+
+def _perfil_vendedor_curto():
+    nome = db.obter_config("vendedor_nome")
+    if nome:
+        return f"Sou o {nome}, desenvolvedor, e crio sites para negócios locais."
+    return "Sou desenvolvedor e crio sites para negócios locais."
+
+
+def _fechamento_template():
+    """Mesma lógica do sortear_fechamento, mas já em texto pronto pro template."""
+    if random.random() < 0.6:
+        return random.choice(PERGUNTAS_DE_FECHAMENTO)
+    data_alvo = date.today() + timedelta(days=random.randint(1, 3))
+    while data_alvo.weekday() >= 5:
+        data_alvo += timedelta(days=1)
+    dia = NOMES_DIAS_UTEIS[data_alvo.weekday()]
+    hora = random.choice(HORARIOS_COMERCIAIS)
+    return f"Se quiser, te mostro numa conversa rápida — pode ser {dia} às {hora}."
+
+
+def gerar_copy_padrao(nome, nota, num_avaliacoes=None, categoria=None, cidade=None,
+                      site_status=None, site_problemas=None, tipo="contato",
+                      follow_ups_enviados=0):
+    """Mensagem de WhatsApp sem IA, com as variáveis do lead. Retorna só o texto.
+
+    - contato: saudação + reputação real + situação do site + oferta de prévia.
+    - followup: reforço curto; 2º em diante é o último toque, sem insistência.
+    """
+    nome_curto = _nome_curto(nome)
+    cidade_curta = _cidade_curta(cidade)
+    reputacao = _detalhe_reputacao(nota, num_avaliacoes)
+    categoria_legivel = _categoria_legivel(categoria)
+
+    if tipo == "followup":
+        if max(follow_ups_enviados, 1) <= 1:
+            return (
+                f"{saudacao_por_horario()}! Passando aqui rapidinho: deixei pronta a sugestão "
+                f"de como ficaria o site do {nome_curto}. Quer que eu te mande? "
+                f"Se não fizer sentido, é só me dizer que não insisto."
+            )
+        return (
+            f"Oi! Última mensagem minha por aqui. Se em algum momento quiser ver a sugestão "
+            f"que montei para o site do {nome_curto}, é só me chamar. "
+            f"Sucesso por aí!"
+        )
+
+    # --- primeiro contato ---
+    aberturas = [
+        f"{saudacao_por_horario()}! Vi o {nome_curto} no Google",
+        f"{saudacao_por_horario()}! Encontrei o {nome_curto} no Google",
+        f"{saudacao_por_horario()}! Tudo bem? Vi o perfil do {nome_curto} no Google",
+    ]
+    abertura = random.choice(aberturas)
+    if reputacao:
+        abertura += f" ({reputacao})"
+
+    if site_status == "site_ruim":
+        problema = (site_problemas or "").split(";")[0].strip() or "está desatualizado"
+        corpo = (
+            f"Passei pelo site de vocês e reparei que {problema} — quem te encontra por lá "
+            f"hoje acaba desistindo antes de chamar no WhatsApp."
+        )
+    else:
+        termo = categoria_legivel or "o trabalho de vocês"
+        onde = f" em {cidade_curta}" if cidade_curta else ""
+        corpo = (
+            f"Reparei que vocês ainda não têm um site próprio — quem pesquisa por {termo}"
+            f"{onde} fora do Maps hoje não encontra vocês."
+        )
+
+    fechamento = _fechamento_template()
+    return (
+        f"{abertura}.\n\n"
+        f"{corpo}\n\n"
+        f"{_perfil_vendedor_curto()} Já montei uma sugestão de como ficaria o site de vocês, "
+        f"pensada no caso de vocês — não é proposta genérica. {fechamento}"
+    )
+
+
 def gerar_mensagem_com_fallback(nome, categoria, endereco, nota, tipo="contato", follow_ups_enviados=0,
                                 site_status=None, site_problemas=None, num_avaliacoes=None,
                                 cidade=None, instagram_url=None, mensagem_anterior=None,
                                 conteudo_site=None):
     """Gera a mensagem de abordagem/follow-up de um lead do Maps.
+    Se todos os provedores de IA falharem (ou nenhum estiver configurado), usa a
+    copy padrão com as variáveis do lead — a mensagem NUNCA deixa de existir.
     Retorna (mensagem, provedor_usado, avisos_para_o_usuario)."""
     if tipo == "followup":
         user = montar_prompt_followup(
@@ -420,14 +531,22 @@ def gerar_mensagem_com_fallback(nome, categoria, endereco, nota, tipo="contato",
         )
     except NenhumProvedorDisponivel as excecao:
         if excecao.erro_final is None:
-            raise RuntimeError(
+            motivo = (
                 "Nenhuma chave de IA configurada. Crie um arquivo .env com GEMINI_API_KEY, "
                 "GROQ_API_KEY e/ou NVIDIA_API_KEY (veja .env.example)."
             )
-        raise RuntimeError(
-            "Todos os provedores de IA configurados falharam agora. "
-            f"Último erro: {traduzir_erro_ia(excecao.erro_final)}"
+        else:
+            motivo = (
+                "Todos os provedores de IA configurados falharam agora. "
+                f"Último erro: {traduzir_erro_ia(excecao.erro_final)}"
+            )
+        logger.warning("usando copy padrão (sem IA): %s", motivo)
+        mensagem = gerar_copy_padrao(
+            nome, nota, num_avaliacoes=num_avaliacoes, categoria=categoria, cidade=cidade,
+            site_status=site_status, site_problemas=site_problemas, tipo=tipo,
+            follow_ups_enviados=follow_ups_enviados,
         )
+        return mensagem, "template", [f"Copy padrão usada (sem IA): {motivo}"]
 
 
 # ---------------------------------------------------------------------------
