@@ -286,6 +286,7 @@ Regras invariáveis (valem para TODA mensagem):
 - Use APENAS os dados fornecidos; nunca invente números, prêmios, clientes ou depoimentos.
 - Adapte o vocabulário ao nicho (clínica → "agenda de pacientes"; imobiliária → "captação de clientes"; restaurante → "reservas e pedidos").
 - Se o campo Nome for dominado por nome de pessoa (ex: "Dra. Ana Souza Odontologia"), fale COM a pessoa pelo primeiro nome, "você" no singular. Se for institucional (ex: "Vivarte Odontologia"), use "vocês"/"a equipe", sem inventar nomes.
+- Pegada da abordagem: no corpo da mensagem, diga que você viu o perfil deles e montou UMA sugestão específica de como ficaria o site (feita pensando neles mesmo - nunca soe como proposta genérica). A última frase obedece ao fechamento sorteado da tarefa.
 - Termine com o fechamento EXATO indicado na tarefa - pedido de ação específico e fechado, nunca "faz sentido conversarmos?".
 - Responda APENAS com o texto final da mensagem: sem aspas em volta, sem explicações, sem markdown.
 

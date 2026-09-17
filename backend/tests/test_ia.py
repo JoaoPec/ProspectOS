@@ -228,6 +228,12 @@ class TestSystemPrompt:
         assert "Fernando" in capturado["system"]
         assert "Empresa X" in capturado["user"]
 
+    def test_system_tem_pegada_de_sugestao_especifica(self, monkeypatch):
+        monkeypatch.setattr(db, "obter_config", lambda chave, default=None: default)
+        system = ia.montar_system_copywriter("WhatsApp")
+        assert "sugestão específica" in system
+        assert "nunca soe como proposta genérica" in system
+
 
 class TestSorteioDeFechamento:
     def test_pergunta_de_sim_nao(self, monkeypatch):
